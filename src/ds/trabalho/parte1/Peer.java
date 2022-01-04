@@ -18,6 +18,7 @@ public class Peer {
 }
 
 class Server implements Runnable {
+    static boolean lock = false;
     ServerSocket server;
 
     public Server(String host, int port) throws Exception {
@@ -53,33 +54,13 @@ class Connection implements Runnable {
             
             //parse command
             Scanner sc = new Scanner(in.readLine());
-            
-            String op = sc.next();
-            double x = Double.parseDouble(sc.next());
-            double y = Double.parseDouble(sc.next());
-            
-            //close scanner
+            int token = Integer.parseInt(sc.next());
             sc.close();
             
-            double result = 0.0;
-            // execute op
-            switch (op) {
-                case "add":
-                    result = x + y;
-                    break;
-                case "sub":
-                    result = x - y;
-                    break;
-                case "mul":
-                    result = x * y;
-                    break;
-                case "div":
-                    result = x / y;
-                    break;
-            }
-            
+            while(Server.lock);
+
             //send result
-            out.println(String.valueOf(result));
+            out.println(String.valueOf(token + 1));
             out.flush();
 
             // close connection
@@ -100,32 +81,16 @@ class Client implements Runnable {
     @Override
     public void run() {
         while (true) {
-            try {
-                //read command
-                System.out.print("$ ");
-                String server = scanner.next();
-                String port = scanner.next();
-                String command = scanner.nextLine();
-
-                // make connection
-                Socket socket = new Socket(InetAddress.getByName(server), Integer.parseInt(port));
-
-                //prepare socket I/O channels
-                PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-                BufferedReader in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-
-                // send command
-                out.println(command);
-                out.flush();
-
-                // receive result
-                String result = in.readLine();
-                System.out.printf("= %f\n", Double.parseDouble(result));
-
-                // close connection
-                socket.close();
-            } catch (Exception e) {
-                e.printStackTrace();
+            
+            System.out.print("$ ");
+            
+            switch(scanner.nextLine()) {
+                case "lock()":
+                    Server.lock = true;
+                    break;
+                case "unlock()":
+                    Server.lock = false;
+                    break;
             }
         }
     }
