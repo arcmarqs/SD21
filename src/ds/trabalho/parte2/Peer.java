@@ -1,4 +1,4 @@
-package ds.trabalho.parte1;
+package ds.trabalho.parte2;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.Map;
 import java.util.Scanner;
 
 public class Peer {
@@ -14,6 +15,7 @@ public class Peer {
     // ler o ip ou hostanme do seguinto
 
     public static void main(String[] args) throws Exception {
+        System.out.printf("new peer @ host=%s\n", args[0]);
         new Thread(new Server(args[0], args[1])).start();
         new Thread(new Client()).start();
     }
@@ -21,12 +23,13 @@ public class Peer {
 
 class Server implements Runnable {
     static final int PORT = 54545;
-
     ServerSocket server;
-
+    
     static boolean lock = false;
 
-    static int token = 0;
+    HashTable<Srting,Int> table = new HashTable<>();
+    HashMap<String,String> dictionary = new HashMap<>(); 
+    
     static String nextHost;
 
     public Server(String myHost, String nextHost) throws Exception {
@@ -52,13 +55,10 @@ class Server implements Runnable {
 
     public static void unlock() {
         try {
-            System.out.println("Token " + Server.token);
-            
             Socket socket = new Socket(InetAddress.getByName(nextHost), Server.PORT);
 
             PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
 
-            out.println(String.valueOf(Server.token + 1));
             out.flush();
 
             socket.close();
@@ -79,16 +79,18 @@ class Connection implements Runnable {
 
     @Override
     public void run() {
+        // prepare socket I/O channels
         try {
             BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
 
             // parse command
             Scanner sc = new Scanner(in.readLine());
-            Server.token = Integer.parseInt(sc.next());
             sc.close();
 
             // close connection
             clientSocket.close();
+            
+            System.out.println("Token");
 
             if(!Server.lock) {
                 Server.unlock();
@@ -110,6 +112,9 @@ class Client implements Runnable {
     @Override
     public void run() {
         while (true) {
+
+            System.out.print("$ ");
+
             switch (scanner.nextLine()) {
                 case "lock()":
                     Server.lock();
