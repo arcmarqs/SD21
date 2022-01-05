@@ -100,7 +100,7 @@ class Client implements Runnable {
 
             String line = scanner.nextLine();
             if(line.contains("register(") && ){
-                host = line.substring(9, line.length() - 1);
+                host = line.substring(8, line.length() - 1);
                 Server.register(host);
             } else if(line.contains("push(")) {
                 host = line.substring(5,line.length()-1);
