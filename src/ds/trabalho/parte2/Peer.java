@@ -28,7 +28,7 @@ class Server implements Runnable {
     
     static boolean lock = false;
 
-    HashMap<String,Integer> table = new HashMap<>();
+    HashMap<String,InetAddress> iptable = new HashMap<>();
     HashMap<String,String> dictionary = new HashMap<>(); 
     
     static String nextHost;
@@ -47,6 +47,14 @@ class Server implements Runnable {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void register(String target){
+        InetAddress ip = InetAddress.getByName(target);
+
+        iptable.insert(target,ip);
+
+        
     }
 
 
