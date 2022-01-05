@@ -6,6 +6,7 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Scanner;
 
@@ -27,11 +28,10 @@ class Server implements Runnable {
     
     static boolean lock = false;
 
-    HashTable<Srting,Int> table = new HashTable<>();
+    HashMap<String,Integer> table = new HashMap<>();
     HashMap<String,String> dictionary = new HashMap<>(); 
     
     static String nextHost;
-
     public Server(String myHost, String nextHost) throws Exception {
         this.server = new ServerSocket(Server.PORT, 1, InetAddress.getByName(myHost));
         Server.nextHost = nextHost;
@@ -49,25 +49,7 @@ class Server implements Runnable {
         }
     }
 
-    public static void lock() {
-        Server.lock = true;
-    }
 
-    public static void unlock() {
-        try {
-            Socket socket = new Socket(InetAddress.getByName(nextHost), Server.PORT);
-
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-            out.flush();
-
-            socket.close();
-
-            Server.lock = false;
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
 }
 
 class Connection implements Runnable {
@@ -111,18 +93,23 @@ class Client implements Runnable {
 
     @Override
     public void run() {
+        String host;
         while (true) {
 
             System.out.print("$ ");
 
-            switch (scanner.nextLine()) {
-                case "lock()":
-                    Server.lock();
-                    break;
-                case "unlock()":
-                    Server.unlock();
-                    break;
+            String line = scanner.nextLine();
+            if(line.contains("register(") && ){
+                host = line.substring(9, line.length() - 1);
+                Server.register(host);
+            } else if(line.contains("push(")) {
+                host = line.substring(5,line.length()-1);
+            } else if(line.contains("pull(")) {
+                host = line.substring(5,line.length()-1);
+            } else if(line.contains("pushpull(")) {
+                host = line.substring(9,line.length()-1);
             }
+
         }
     }
 }
