@@ -6,32 +6,37 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Scanner;
 
 public class Peer {
 
-    // ler o ip ou hostanme o meu
+    static Long myTimestamp;
+    
+    static HashSet<InetAddress> clients = new HashSet<>();
+    
+    // ler o ip ou hostanme o meu neigh
     // ler o ip ou hostanme do seguinto
 
     public static void main(String[] args) throws Exception {
-        new Thread(new Server(args[0], args[1])).start();
+        myTimestamp = System.currentTimeMillis();
+        
+        for(int i = 1; i < args.length; i++){
+            clients.add(InetAddress.getByName(args[i]));
+        }
+
+        new Thread(new Server(args[0])).start();
         new Thread(new Client()).start();
     }
 }
 
 class Server implements Runnable {
-    static final int PORT = 54545;
-
     ServerSocket server;
+    static final int PORT = 54547;
 
-    static boolean lock = false;
-
-    static int token = 0;
-    static String nextHost;
-
-    public Server(String myHost, String nextHost) throws Exception {
+    public Server(String myHost) throws Exception {
         this.server = new ServerSocket(Server.PORT, 1, InetAddress.getByName(myHost));
-        Server.nextHost = nextHost;
     }
 
     @Override
@@ -43,29 +48,6 @@ class Server implements Runnable {
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }
-    }
-
-    public static void lock() {
-        Server.lock = true;
-    }
-
-    public static void unlock() {
-        try {
-            System.out.println("Token " + Server.token);
-            
-            Socket socket = new Socket(InetAddress.getByName(nextHost), Server.PORT);
-
-            PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-            out.println(String.valueOf(Server.token + 1));
-            out.flush();
-
-            socket.close();
-
-            Server.lock = false;
-        } catch (Exception e) {
-            e.printStackTrace();
         }
     }
 }
@@ -84,8 +66,28 @@ class Connection implements Runnable {
 
             // parse command
             Scanner sc = new Scanner(in.readLine());
-            Server.token = Integer.parseInt(sc.next());
+            Long clientTimestamp = Long.parseLong(sc.next());
+            String message = sc.nextLine();
             sc.close();
+
+            //Peer.clients.put(clientSocket.getInetAddress(),
+            //    Math.max(clientTimestamp, Peer.myTimestamp) + 1);
+
+            Peer.myTimestamp = Math.max(Peer.myTimestamp, clientTimestamp) + 1;
+
+            /*tc = max(tc, ts) + 1;
+            // bleat to everyone
+            if (the message received is not itself a bleat) {
+                foreach client q {
+                    net-send(q,bleat,tc);
+                }
+            }
+            
+            put (m,ts) in a sorted queue;
+            while ( “something from everyone” in the queue) {
+                P = fetch and remove earliest timestamp message in queue;
+                if P isn't a bleat, deliver(P);
+            }*/
 
             // close connection
             clientSocket.close();
@@ -110,13 +112,11 @@ class Client implements Runnable {
     @Override
     public void run() {
         while (true) {
-            switch (scanner.nextLine()) {
-                case "lock()":
-                    Server.lock();
-                    break;
-                case "unlock()":
-                    Server.unlock();
-                    break;
+            String message = scanner.nextLine();
+            Peer.timestampClient += 1;
+
+            for (String client : Peer.clients.keySet()) {
+                netSend(client, message, Peer.timestampClient);
             }
         }
     }
