@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+option objc_class_prefix = "HLW";
+
+
+service Message {
+    rpc register(MessageRequest) returns (Empty){};
+    rpc push(Dictionary) returns (Empty){};
+    rpc pull(MessageRequest) returns (Dictionary){};
+    rpc pushpull(PPRequest) returns (Dictionary){};
+}
+
+message MessageRequest {
+   string host = 1;
+}
+
+message Dictionary {
+   map<string,string> dict = 1;
+}
+
+message PPRequest {
+    string host = 1;
+    Dictionary d = 2;
+}
+
+message Empty {
+}
