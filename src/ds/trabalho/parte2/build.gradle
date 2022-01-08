@@ -39,6 +39,7 @@ dependencies {
 
     // examples/advanced need this for JsonFormat
     implementation "com.google.protobuf:protobuf-java-util:${protobufVersion}"
+    implementation "com.google.code.gson:gson:2.8.9"
 
     runtimeOnly "io.grpc:grpc-netty-shaded:${grpcVersion}"
 
@@ -63,6 +64,9 @@ sourceSets {
         java {
             srcDirs 'build/generated/source/proto/main/grpc'
             srcDirs 'build/generated/source/proto/main/java'
+        } 
+        resources {
+            srcDirs 'src/main/resources'
         }
     }
 }
