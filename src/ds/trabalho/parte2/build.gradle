@@ -66,9 +66,13 @@ sourceSets {
             srcDirs 'build/generated/source/proto/main/java'
         } 
         resources {
-            srcDirs 'src/main/resources'
+            srcDirs 'src/main/resources' 
         }
     }
+}
+
+processResources {
+    duplicatesStrategy = 'include'
 }
 
 startScripts.enabled = false;
@@ -80,7 +84,15 @@ task peerServ(type: CreateStartScripts) {
     classpath = startScripts.classpath
 }
 
+task dataParser(type: CreateStartScripts) {
+    mainClassName = 'ds.DataParser'
+    applicationName = 'data-parser'
+    outputDir = new File(project.buildDir,'tmp')
+    classpath = startScripts.classpath
+}
+
 applicationDistribution.into('bin') {
     from(peerServ)
+    from(dataParser)
     fileMode = 0755
 }

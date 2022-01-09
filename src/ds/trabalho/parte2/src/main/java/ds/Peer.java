@@ -40,6 +40,7 @@ class PServer implements Runnable {
 
     void start() throws IOException {
         server = ServerBuilder.forPort(port).addService(new MessageImpl()).build().start();
+        refreshDict();
         buildChannel();
         stub = MessageGrpc.newBlockingStub(chan);
         System.out.println("Server started on " + port);
@@ -95,8 +96,18 @@ class PServer implements Runnable {
         hostNames.add(host);
     }
 
-    public static void updateDict(Map<String,String> otherdict) {
+    private static void updateDict(Map<String,String> otherdict) {
         dict.putAll(otherdict);
+    }
+
+
+    private static void refreshDict() {
+        try {
+            PServer.dict.putAll(DataParser.getRandomEntries());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
     }
 
     public static void printHostList() {
@@ -237,6 +248,7 @@ class PServer implements Runnable {
             responseObserver.onNext(Empty.newBuilder().build());
             responseObserver.onCompleted();
             System.out.println(h + " registered" );
+            refreshDict();
             printHostList();
         }
     }
