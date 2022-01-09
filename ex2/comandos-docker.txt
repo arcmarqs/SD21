@@ -1,0 +1,20 @@
+#criar a rede para os nos
+docker network create -d bridge net
+
+#maquina1
+docker build -t app-m1 -f Dockerfile.m1 . && docker run -it --network=net --rm --name m1 app-m1
+
+#maquina2
+docker build -t app-m2 -f Dockerfile.m2 . && docker run -it --network=net --rm --name m2 app-m2
+
+#maquina3
+docker build -t app-m3 -f Dockerfile.m3 . && docker run -it --network=net --rm --name m3 app-m3
+
+#maquina4
+docker build -t app-m4 -f Dockerfile.m4 . && docker run -it --network=net --rm --name m4 app-m4
+
+#maquina5
+docker build -t app-m5 -f Dockerfile.m5 . && docker run -it --network=net --rm --name m5 app-m5
+
+#maquina6
+docker build -t app-m6 -f Dockerfile.m6 . && docker run -it --network=net --rm --name m6 app-m6
