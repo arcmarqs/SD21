@@ -41,8 +41,6 @@ class PServer implements Runnable {
     void start() throws IOException {
         server = ServerBuilder.forPort(port).addService(new MessageImpl()).build().start();
         refreshDict();
-        buildChannel();
-        stub = MessageGrpc.newBlockingStub(chan);
         System.out.println("Server started on " + port);
         Runtime.getRuntime().addShutdownHook(new Thread() {
             @Override
@@ -63,14 +61,12 @@ class PServer implements Runnable {
         while (true) {
             String targetHost = "null";
             String line = scanner.nextLine();
-
             try {
                
                 targetHost = line.substring(line.indexOf("(")+1,line.indexOf(")"));
 
                 if(line.contains("register(")){
                     register(targetHost);
-                    
                 } else if(line.contains("push(")) {
                     push(targetHost);
                 } else if(line.contains("pull(")) {
@@ -81,7 +77,8 @@ class PServer implements Runnable {
                     System.out.println("Unknown command");
                 }
             } catch (Exception e){
-                    System.err.println("unknown Command exeption " + e );
+                    System.err.println("unknown Command exception " + e);
+                    e.printStackTrace(System.err);
             }
         }        
     }
@@ -95,11 +92,6 @@ class PServer implements Runnable {
     public static void registerHost(String host) {
         hostNames.add(host);
     }
-
-    private static void updateDict(Map<String,String> otherdict) {
-        dict.putAll(otherdict);
-    }
-
 
     private static void refreshDict() {
         try {
@@ -122,16 +114,13 @@ class PServer implements Runnable {
     public static String getHostName() {
         return hostName;
     }
-    private void buildChannel(){
-        chan = ManagedChannelBuilder.forAddress(hostName, port).usePlaintext().build();
-    }
     private void destroyChannel() throws InterruptedException{
         chan.shutdownNow();
     } 
 
     public void setTargetHost(String target) {
-        chan.enterIdle();
         chan = ManagedChannelBuilder.forAddress(target, port).usePlaintext().build();
+        stub = MessageGrpc.newBlockingStub(chan);
     }
 
     String hostToIP(String h) {
@@ -178,9 +167,10 @@ class PServer implements Runnable {
             System.err.println("Host " + host + " not registered");
             return;
         }
-
+        
         setTargetHost(host);
-        Dictionary r = Dictionary.newBuilder().putAllDict(PServer.dict).build();
+        Dictionary d = Dictionary.newBuilder().putAllDict(PServer.dict).build();
+        PPRequest r = PPRequest.newBuilder().setHost(PServer.hostName).setD(d).build(); 
         stub.push(r);
         chan.enterIdle();
         System.out.println("Sent Dictionary to " + host);
@@ -199,7 +189,7 @@ class PServer implements Runnable {
         Dictionary rep = stub.pushpull(r);
         chan.enterIdle();
         PServer.dict.putAll(rep.getDictMap());
-        System.out.println("Updated Dictionary with info from " + host);
+        System.out.println("Exchanged Dictionaries with" + host);
         printDictionary();
     }
 
@@ -208,37 +198,32 @@ class PServer implements Runnable {
         @Override
         public void pull(MessageRequest request, StreamObserver<Dictionary> responseObserver) {
             String h = request.getHost();
-            if(!PServer.hostNames.contains(h)){
-                System.err.println("Host " + h + " not registered");
-                responseObserver.onCompleted();
-            } else {
+
             responseObserver.onNext(Dictionary.newBuilder().putAllDict(PServer.dict).build());
             responseObserver.onCompleted();
 
-            System.out.println("Updated Dictionary with info from" + h);
+            System.out.println("Updated Dictionary with info from " + h);
             printDictionary();
-            }
         }
 
         @Override
-        public void push(Dictionary request, StreamObserver<Empty> responseObserver) {
-            PServer.dict.putAll(request.getDictMap());
+        public void push(PPRequest request, StreamObserver<Empty> responseObserver) {
+            String h = request.getHost();
+           
+            PServer.dict.putAll(request.getD().getDictMap());
             responseObserver.onNext(Empty.newBuilder().build());
             responseObserver.onCompleted();
+            System.out.println("Updated Dictionary with info from " + h);
         }
 
         @Override
         public void pushpull(PPRequest request, StreamObserver<Dictionary> responseObserver) {
             String h = request.getHost();
-            if(!PServer.hostNames.contains(h)){
-                System.err.println("Host " + h + " not registered");
-                responseObserver.onCompleted();
-            } else {
+    
             responseObserver.onNext(Dictionary.newBuilder().putAllDict(PServer.dict).build());
             PServer.dict.putAll(request.getD().getDictMap());
             responseObserver.onCompleted();
-            System.out.println("Exchanged Dictionaries with" + h);
-            }
+            System.out.println("Exchanged Dictionaries with " + h);  
         }
 
         @Override

@@ -8,7 +8,7 @@ option objc_class_prefix = "HLW";
 
 service Message {
     rpc register(MessageRequest) returns (Empty){};
-    rpc push(Dictionary) returns (Empty){};
+    rpc push(PPRequest) returns (Empty){};
     rpc pull(MessageRequest) returns (Dictionary){};
     rpc pushpull(PPRequest) returns (Dictionary){};
 }
