@@ -1,4 +1,4 @@
-package ds;
+package ds.trabalho.parte2;
 
 import java.lang.reflect.Type;
 import java.nio.file.Files;

@@ -78,14 +78,14 @@ processResources {
 startScripts.enabled = false;
 
 task peerServ(type: CreateStartScripts) {
-    mainClassName = 'ds.Peer'
+    mainClassName = 'ds.trabalho.parte2.Peer';
     applicationName = 'peer-serv'
     outputDir = new File(project.buildDir,'tmp')
     classpath = startScripts.classpath
 }
 
 task dataParser(type: CreateStartScripts) {
-    mainClassName = 'ds.DataParser'
+    mainClassName = 'ds.trabalho.parte2.DataParser';
     applicationName = 'data-parser'
     outputDir = new File(project.buildDir,'tmp')
     classpath = startScripts.classpath

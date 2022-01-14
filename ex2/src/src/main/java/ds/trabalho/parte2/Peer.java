@@ -1,4 +1,4 @@
-package ds;
+package ds.trabalho.parte2;
 
 import io.grpc.Server;
 import io.grpc.ServerBuilder;

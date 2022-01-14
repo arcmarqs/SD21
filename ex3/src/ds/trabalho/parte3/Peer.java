@@ -6,21 +6,23 @@ import java.io.PrintWriter;
 import java.net.InetAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.HashSet;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.PriorityQueue;
 import java.util.Scanner;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class Peer {
 
     static final AtomicLong myTimestamp = new AtomicLong();
-    static final HashSet<InetAddress> neighbors = new HashSet<>();
+    static final ArrayList<String> neighbors = new ArrayList<>();
 
     public static void main(String[] args) throws Exception {
         Peer.myTimestamp.set(System.currentTimeMillis());
-        
+
         for(int i = 1; i < args.length; i++){
-            Peer.neighbors.add(InetAddress.getByName(args[i]));
+            Peer.neighbors.add(args[i]);
         }
 
         new Thread(new Server(args[0])).start();
@@ -30,12 +32,33 @@ public class Peer {
 
 class Server implements Runnable {
     private ServerSocket server;
+    private InetAddress serverIp;
     public static final int PORT = 54547;
 
-    static final PriorityQueue<Message> pq = new PriorityQueue<Message>();
+    static final PriorityQueue<Message> pq = new PriorityQueue<>();
+    static final HashMap<InetAddress, ArrayList<Message>> source = new HashMap<>();
 
     public Server(String myHost) throws Exception {
         this.server = new ServerSocket(Server.PORT, 1, InetAddress.getByName(myHost));
+        this.serverIp = server.getInetAddress();
+    }
+
+    public void addMessage(InetAddress ip, Message message){
+        if(! source.containsKey(ip)){
+            source.put(ip, new ArrayList<Message>());
+        }
+        
+        ArrayList<Message> messages = source.get(ip);
+        messages.add(message);
+    }
+
+    public boolean somethingFromEveryone() {
+        // garantir que tem uma mensagem de cada maquina na priority queue.
+        for (Message message : pq) {
+            
+        }
+        
+        return true;
     }
 
     public boolean isBleat(Message message) {
@@ -48,9 +71,13 @@ class Server implements Runnable {
             try {
                 Socket clientSocket = server.accept();
 
+                InetAddress sender = clientSocket.getInetAddress();
+
                 BufferedReader in = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
                 Message message = new Message().parse(in.readLine());
                 clientSocket.close();
+                
+                addMessage(sender, message);
 
                 //tc = max(tc, ts) + 1;
                 long tc;
@@ -69,7 +96,7 @@ class Server implements Runnable {
                 }*/
 
                 if(! isBleat(message)) {
-                    Client.mSend(tc, message.getMessage());
+                    Server.mSend(tc, message.getMessage());
                 }
 
                 /*put (m,ts) in a sorted queue;
@@ -91,6 +118,35 @@ class Server implements Runnable {
             }
         }
     }
+
+    public static void mSend(Message message) {
+        for (String client : Peer.neighbors) {
+            try {
+                sendTo(InetAddress.getByName(client), message);
+            } catch(Exception e) {
+                e.printStackTrace();
+            }
+        }
+    }
+
+    public static void mSend(String input) {
+        long timestamp = Peer.myTimestamp.incrementAndGet();
+        mSend(new Message(timestamp, input));
+    }
+
+    public static void mSend(Long timestamp, String line) {
+        mSend(new Message(timestamp, line));
+    }
+
+    public static void sendTo(InetAddress client, Message message) throws Exception {
+        Socket socket = new Socket(client, Server.PORT);
+        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
+
+        out.println(message.toString());
+        out.flush();
+
+        socket.close();
+    }
 }
 
 class Client implements Runnable {
@@ -103,37 +159,17 @@ class Client implements Runnable {
     @Override
     public void run() {
         while (true) {
-            Client.mSend(scanner.nextLine());
+            String input = scanner.nextLine();
+            Server.mSend(input);
         }
     }
 
     public static void deliver(Message message) {
         System.out.println(message);
     }
-
-    public static void mSend(Message message) {
-        for (InetAddress client : Peer.neighbors) {
-            try {
-                message.sendTo(client);
-            } catch(Exception e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static void mSend(String input) {
-        long timestamp = Peer.myTimestamp.incrementAndGet();
-        Message message = new Message(timestamp, input);
-        mSend(message);
-    }
-
-    public static void mSend(Long timestamp, String line) {
-        Message message = new Message(timestamp, line);
-        mSend(message);
-    }
 }
 
-class Message {
+class Message implements Comparable<Message> {
     private Long timestamp;
     private String message;
 
@@ -158,16 +194,6 @@ class Message {
 
     public void setMessage(String message) {
         this.message = message;
-    }
-
-    public void sendTo(InetAddress client) throws Exception {
-        Socket socket = new Socket(client, Server.PORT);
-        PrintWriter out = new PrintWriter(socket.getOutputStream(), true);
-
-        out.println(this.toString());
-        out.flush();
-
-        socket.close();
     }
 
     public int compareTo(Message m) {
