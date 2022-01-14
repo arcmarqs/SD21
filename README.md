@@ -1,4 +1,4 @@
-# SD21
+# Trabalho Pratico de Sistemas Distribuidos
 
 Amadeu Marques up201804974
 Eduardo Santos up201805449
