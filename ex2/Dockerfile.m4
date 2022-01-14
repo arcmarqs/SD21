@@ -9,4 +9,4 @@ RUN chmod 755 gradlew &&\
     ./gradlew build &&\
     ./gradlew installDist
 
-CMD ["./build/install/parte2/bin/peer-serv", "m4"]
+CMD ["./build/install/src/bin/peer-serv", "m4"]

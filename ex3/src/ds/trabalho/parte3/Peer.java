@@ -160,7 +160,7 @@ class Client implements Runnable {
     public void run() {
         while (true) {
             String input = scanner.nextLine();
-            Server.mSend(input);
+            Server.mSend(" " + input);
         }
     }
 
@@ -241,7 +241,7 @@ class Message implements Comparable<Message> {
 
     @Override
     public String toString() {
-        return timestamp + " " + message;
+        return timestamp + message;
     }
         
 }
