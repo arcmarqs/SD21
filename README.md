@@ -66,7 +66,7 @@ Executar
 java ds.trabalho.parte3.Peer <source_machine> <other_machine1> <other_machine2> <other_machine3>
 ```
 
-
+Para enviar mensagens basta escrever no terminal.
 
 ## Extras
 Durante a construção do projeto tivemos bastante dificuldade em aceder as maquinas. Então usamos o docker para simular a rede e as maquinas.
